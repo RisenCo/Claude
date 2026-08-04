@@ -1,0 +1,32 @@
+{
+  "_comment": [
+    "Copy the statusLine and hooks blocks into .claude/settings.json (project)",
+    "or ~/.claude/settings.json (all projects). Pick ONE statusLine command -",
+    "Claude Code runs a single script, though that script may print many lines.",
+    "Paths below assume you copied this folder to ~/.claude/statusline/."
+  ],
+
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline/02-dashboard.sh",
+    "padding": 0
+  },
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "TodoWrite",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/statusline/hooks/todo-progress.sh"
+          }
+        ]
+      }
+    ]
+  },
+
+  "env": {
+    "CHECKLIST_PATH": "ROADMAP.md"
+  }
+}

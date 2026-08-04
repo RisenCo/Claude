@@ -1,0 +1,50 @@
+{
+  "cwd": "/home/user/Claude",
+  "session_id": "demo-session-0001",
+  "session_name": "progress-bar-examples",
+  "transcript_path": "/home/user/.claude/projects/demo/transcript.jsonl",
+  "version": "2.1.196",
+  "model": {
+    "id": "claude-opus-5",
+    "display_name": "Opus"
+  },
+  "workspace": {
+    "current_dir": "/home/user/Claude",
+    "project_dir": "/home/user/Claude",
+    "added_dirs": [],
+    "repo": {
+      "host": "github.com",
+      "owner": "RisenCo",
+      "name": "Claude"
+    }
+  },
+  "output_style": { "name": "default" },
+  "cost": {
+    "total_cost_usd": 0.4231,
+    "total_duration_ms": 374000,
+    "total_api_duration_ms": 96400,
+    "total_lines_added": 156,
+    "total_lines_removed": 23
+  },
+  "context_window": {
+    "total_input_tokens": 62400,
+    "total_output_tokens": 1800,
+    "context_window_size": 200000,
+    "used_percentage": 31,
+    "remaining_percentage": 69,
+    "current_usage": {
+      "input_tokens": 8500,
+      "output_tokens": 1800,
+      "cache_creation_input_tokens": 5000,
+      "cache_read_input_tokens": 48900
+    }
+  },
+  "rate_limits": {
+    "five_hour": { "used_percentage": 28, "resets_at": 1785200000 },
+    "seven_day": { "used_percentage": 12, "resets_at": 1785600000 }
+  },
+  "exceeds_200k_tokens": false,
+  "effort": { "level": "high" },
+  "thinking": { "enabled": true },
+  "pr": { "number": 14, "url": "https://github.com/RisenCo/Claude/pull/14", "review_state": "draft" }
+}
