@@ -1,0 +1,478 @@
+<title>Squatch Soap Value Study</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column (~72ch) for prose; charts break out to a wider measure. Soap-lab palette: cool slate neutrals, pine-green accent. */
+:root{
+  --bg:#f7f8f6; --surface:#fcfcfb; --fg:#15201b; --fg-2:#4d5b54; --muted:#86918b;
+  --line:#dfe4e0; --accent:#1f6b4e; --accent-ink:#1f6b4e; --rule:#c6cdc8;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --grid:#e1e0d9; --axis:#c3c2b7;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1412; --surface:#1a1f1c; --fg:#eef1ee; --fg-2:#bcc5bf; --muted:#8d978f;
+  --line:#2b332e; --accent:#5fc49a; --accent-ink:#5fc49a; --rule:#3a433d;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --grid:#2c2c2a; --axis:#383835; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1412; --surface:#1a1f1c; --fg:#eef1ee; --fg-2:#bcc5bf; --muted:#8d978f;
+  --line:#2b332e; --accent:#5fc49a; --accent-ink:#5fc49a; --rule:#3a433d;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --grid:#2c2c2a; --axis:#383835; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding-block:32px 64px;padding-inline:16px}
+h1,h2,h3{font-family:var(--display);line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,5vw,44px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(22px,3vw,28px);font-weight:700;margin-top:56px;padding-top:16px;border-top:2px solid var(--rule)}
+h3{font-size:18px;font-weight:700;margin-top:28px}
+p{max-width:72ch;margin:12px 0}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lede{font-size:19px;color:var(--fg-2);max-width:72ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px;color:var(--muted);margin-top:12px}
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:28px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;min-width:0}
+.card .k{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.1;color:var(--accent-ink)}
+.card .l{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:6px}
+.card p{font-size:15px;margin:8px 0 0;color:var(--fg-2)}
+ul,ol{max-width:72ch;padding-left:22px}
+li{margin:6px 0}
+li::marker{color:var(--muted)}
+.fig{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 18px 12px;min-width:0}
+.fig h3{margin-top:0}
+.fig .sub{font-size:14px;color:var(--fg-2);margin:4px 0 12px;max-width:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--fg-2);margin:0 0 10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+svg{display:block;width:100%;height:auto;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+svg text{fill:var(--fg-2);font-size:12px}
+svg .tick{fill:var(--muted);font-variant-numeric:tabular-nums}
+svg .lab{fill:var(--fg)}
+svg .val{fill:var(--fg);font-variant-numeric:tabular-nums;font-weight:600}
+svg .grid{stroke:var(--grid);stroke-width:1}
+svg .base{stroke:var(--axis);stroke-width:1}
+.bar{cursor:pointer}
+.bar:hover rect.m, .dot:hover circle.m{filter:brightness(.85)}
+#tip{position:fixed;pointer-events:none;background:var(--fg);color:var(--bg);font-size:13px;line-height:1.35;padding:8px 10px;border-radius:5px;max-width:280px;z-index:9;opacity:0;transition:opacity .08s}
+#tip b{display:block;font-size:13.5px;margin-bottom:2px}
+details{margin-top:8px;font-size:14px}
+summary{cursor:pointer;color:var(--accent-ink);font-weight:600}
+.tw{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--fg-2);white-space:nowrap}
+.pill.v{border-color:var(--good);color:var(--good)}
+.pill.p{border-color:var(--warn);color:#8a5d00}
+.pill.u{border-color:var(--crit);color:var(--crit)}
+:root[data-theme="dark"] .pill.p{color:var(--warn)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .pill.p{color:var(--warn)} }
+.yes{color:var(--good);font-weight:600}.no{color:var(--crit);font-weight:600}.mid{color:#8a5d00;font-weight:600}
+:root[data-theme="dark"] .mid{color:var(--warn)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .mid{color:var(--warn)} }
+.src{font-size:13.5px;color:var(--fg-2);max-width:none}
+.src li{margin:3px 0;word-break:break-word}
+.src a{color:var(--accent-ink);text-decoration:none}
+.src a:hover{text-decoration:underline}
+a{color:var(--accent-ink)}
+.note{border-left:3px solid var(--accent);padding:6px 14px;background:var(--surface);max-width:72ch;font-size:15px;color:var(--fg-2)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Consumer research · Midlothian, TX 76065 · prices read 10 Oct 2026</div>
+  <h1 style="margin-top:8px">Squatch Soap Value Study</h1>
+  <p class="lede">Where Dr. Squatch is cheapest per bar, whether the bar or the body wash is the better buy, and which simpler-ingredient soaps compete with it on price and skin feel. Every number links to a source. Anything we could not confirm is marked.</p>
+  <div class="meta"><span>Bar = 5 oz · Body wash = 14 fl oz</span><span>Retailer pages read via search snapshots and crawls, not live carts</span><span>Pre-tax, pre-shipping</span></div>
+
+  <div class="verdict">
+    <div class="card"><div class="l">Cheapest reliable bar price</div><div class="k">$6.00 / bar</div><p>drsquatch.com right now, at any pack size (14% sale), or any quarterly subscription of 4+ bars with free shipping. Every local store is $6.44–$7.49.</p></div>
+    <div class="card"><div class="l">Cheapest if you have a warehouse card</div><div class="k">$4.83–$5.00</div><p>Sam's Club 6-pack ($28.98) or Costco.com 5-pack ($24.99). Both are snapshot prices, members only; Costco in-warehouse stock is mostly out.</p></div>
+    <div class="card"><div class="l">Bar vs. liquid</div><div class="k">Bar wins, with a dish</div><p>Same soap chemistry in both. The wash is cheaper per ounce, but a bar kept dry costs ~$0.30 a shower vs ~$0.45 for the wash. A bar left in a puddle loses.</p></div>
+    <div class="card"><div class="l">Closest cheaper match</div><div class="k">Dr. Bronner's bar</div><p>Same saponified coconut/palm/olive base, essential-oil scent, ~$5.17 at Walmart ($1.03/oz vs $1.20–$1.40). Kirk's Castile is the budget floor at ~$0.37/oz.</p></div>
+  </div>
+
+  <h2>1. Dr. Squatch, price per 5 oz bar, by where you buy</h2>
+  <p>Sorted cheapest to priciest. Hatched bars are prices we could not confirm on the retailer's own page. Hover for pack size, source and caveats.</p>
+  <div class="fig">
+    <h3>Price per bar across 20 buying options</h3>
+    <div class="sub">USD per 5 oz bar. Warehouse-club prices need a membership. drsquatch.com adds shipping under $55 unless you subscribe.</div>
+    <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>Verified on retailer or official page</span><span><i class="sw" id="sw-p"></i>Partially verified (snapshot, date or store unclear)</span><span><i class="sw" id="sw-u"></i>Unverified (third-party tracker or conflicting snapshots)</span></div>
+    <div id="c1"></div>
+    <details><summary>Table view</summary><div class="tw"><table id="t1"><thead><tr><th>Channel</th><th>Pack</th><th>Price</th><th>Per bar</th><th>Status</th><th>Note</th></tr></thead><tbody></tbody></table></div></details>
+  </div>
+
+  <h2>2. Price per ounce, Dr. Squatch vs. true-soap alternatives</h2>
+  <p>Only saponified-oil soaps are included (same chemistry as Dr. Squatch). Syndet bars like Dove and Bravo Sierra are excluded because they are a different product. Yardley is shown for price context but fails the simple-ingredient brief (tallow, dyes, synthetic fragrance).</p>
+  <div class="fig">
+    <h3>Cost per ounce, 23 products</h3>
+    <div class="sub">USD per oz at the cited retailer. Bar sizes differ (3 to 10 oz), so per-ounce is the fair comparison.</div>
+    <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>Dr. Squatch bar</span><span><i class="sw" style="background:var(--s3)"></i>Dr. Squatch body wash</span><span><i class="sw" style="background:var(--s2)"></i>Alternative</span><span><i class="sw" style="background:var(--s2);opacity:.55"></i>Lighter = partially verified</span><span><i class="sw" id="sw-h"></i>Hatched = unverified price</span></div>
+    <div id="c2"></div>
+    <details><summary>Table view</summary><div class="tw"><table id="t2"><thead><tr><th>Product</th><th>Size</th><th>Price</th><th>Per oz</th><th>Retailer</th><th>Status</th></tr></thead><tbody></tbody></table></div></details>
+  </div>
+
+  <h2>3. Rating vs. price per ounce</h2>
+  <p>Products with at least 100 retailer reviews. Bubble area scales with review count. Ratings come from the retailer named in the tooltip, so they are not strictly comparable across sites, and Amazon merges scents into one listing.</p>
+  <div class="fig">
+    <h3>Where the value sits</h3>
+    <div class="sub">Lower-right is the sweet spot: cheap and well reviewed. Dr. Squatch sits in the upper-middle: well reviewed, mid-priced.</div>
+    <div class="legend"><span><i class="sw" style="background:var(--s1);border-radius:50%"></i>Dr. Squatch</span><span><i class="sw" style="background:var(--s2);border-radius:50%"></i>Alternative</span></div>
+    <div id="c3"></div>
+    <details><summary>Table view</summary><div class="tw"><table id="t3"><thead><tr><th>Product</th><th>Rating</th><th>Reviews</th><th>Per oz</th><th>Platform</th></tr></thead><tbody></tbody></table></div></details>
+  </div>
+
+  <h2>4. Ingredient simplicity, side by side</h2>
+  <p>This is the "quality" axis you asked about. All of these are true soaps with alkaline pH (roughly 9–10), which is likely why they feel different from Dove-type syndet bars. Columns flag the things that make a list less simple or less natural.</p>
+  <div class="tw"><table id="t4"><thead><tr><th>Product</th><th>Soap type</th><th>Fragrance</th><th>Colorants / TiO2</th><th>Palm</th><th>Shea or superfat</th><th>~Ingredients</th><th>Per oz</th><th>Src</th></tr></thead><tbody></tbody></table></div>
+  <p class="note" style="margin-top:14px">Dr. Squatch's bar list is short and readable, but "naturally derived fragrance" is an undisclosed blend. EWG rates the Pine Tar bar "Low Hazard" overall with a High allergy sub-score driven by fragrance and orange oil (data from Dec 2022). A $9M class settlement over the word "natural" closed in Aug 2026; the company denies wrongdoing and agreed to relabel as "98–100% natural origin." Claims of $0.50 per product, up to 5 without a receipt, are open until 27 Nov 2026.</p>
+
+  <h2>5. Stores near Midlothian that stock it</h2>
+  <p>Store-level stock could not be checked online for any chain. Prices are what each chain's website showed, which several chains say may differ in store.</p>
+  <div class="tw"><table id="t5"><thead><tr><th>Store</th><th>Nearest location</th><th>5 oz bar</th><th>14 oz wash</th><th>Status</th><th>Note</th></tr></thead><tbody></tbody></table></div>
+
+  <h2>6. Bar or liquid?</h2>
+  <ul>
+    <li><b>Same chemistry.</b> The body wash is potassium cocoate and potassium oleate in water with glycerin: a true liquid soap, no sulfates or synthetic surfactants. It is not a different "cleaner" formula, just the bar's chemistry in a bottle with thickener and conditioner.</li>
+    <li><b>Per ounce the wash is cheaper.</b> $0.78–$1.07/oz versus $1.20–$1.40/oz for the bar at the same retailers.</li>
+    <li><b>Per shower the bar is cheaper, if it stays dry.</b> Dr. Squatch says a bar lasts 2–3 weeks of daily use. A 60-day test found a bar lasted 9 days in a wet dish and 21–25 days on a draining soap saver. At $6–$7 a bar that is $0.28–$0.33 per shower dry, or $0.78 wet. A 14 oz bottle runs about 30 daily showers at $12.98–$15, so $0.43–$0.50 per shower.</li>
+    <li><b>Reviews favor the bar slightly.</b> Bars rate 4.5–4.7 on Amazon, Walmart and Target; the wash rates 4.3–4.6, with "thin," "runny" and "scent fades fast" as the recurring complaints.</li>
+    <li><b>Highest-ROI purchase:</b> a draining soap dish or soap-saver bag. It roughly doubles bar life. Pine Tar also stains tubs and washcloths, which is a cleaning cost.</li>
+  </ul>
+
+  <h2>7. How to buy, cheapest to priciest</h2>
+  <ol>
+    <li><b>Sam's Club or Costco member?</b> Sam's 6-ct $28.98 ($4.83/bar) or Costco.com 5-pack $24.99 ($5.00/bar). Confirm the price in your cart; both were snapshots. Costco warehouse stock was nearly all out as of Aug 2026.</li>
+    <li><b>No membership:</b> drsquatch.com at $6.00/bar. Buy 11 bars ($66) to clear the $55 free-shipping line, or set a quarterly subscription of 4+ bars (free shipping, $6.00/bar) and cancel from your account after the first box if you don't want it recurring. The BBB profile shows unanswered complaints about subscriptions, so cancel in the account portal and keep the confirmation.</li>
+    <li><b>Need it today:</b> H-E-B Waxahachie ($6.44–$6.98) or Walmart Midlothian ($6.98). Skip CVS and Kroger at $7.29–$7.49 unless a coupon is running (CVS had $3 ExtraBucks for buying 2).</li>
+    <li><b>Amazon 10-pack</b> was fetched at $45.00 ($4.50/bar) but a cached snapshot showed $59.99. Check before you trust it.</li>
+    <li><b>Try before committing:</b> the official $5 Mini Soap Trial (5 × 2.3 oz, $0.43/oz) is the cheapest Dr. Squatch per ounce anywhere, but it auto-renews at $30 after 30 days.</li>
+  </ol>
+
+  <h2>8. If you want to test a cheaper equivalent</h2>
+  <ul>
+    <li><b>Dr. Bronner's Pure-Castile Bar, 5 oz, ~$5.17 (Walmart).</b> Closest formula match: saponified organic coconut/palm/olive, essential oils only, no shea. 4.8 stars on 1,040 Walmart reviews. Consumer Reports' "Best Unscented" and a Wirecutter pick. The $5 experiment.</li>
+    <li><b>Kirk's Castile, 4 oz, ~$1.49/bar in a 4-pack (Walmart).</b> Five or six ingredients, no palm, no dye. 4.8 stars on 2,554 reviews. 100% coconut soap lathers hard and can feel drying; alternate it if your skin tightens.</li>
+    <li><b>Every Man Jack Cold Plunge bar, 5 oz, $5.99–$6.99 (Target).</b> The most literal clone: cold-process with shea, kaolin and an exfoliant. But it uses synthetic fragrance with declared allergens plus mica and iron oxide colorants, so it is not simpler.</li>
+    <li><b>Kirkland Signature Shea bar (Costco), ~$0.67/bar.</b> Consumer Reports' overall top pick for cleaning without dryness. Contains "parfum" and titanium dioxide. Price is a July 2026 tracker figure and the item showed out of stock.</li>
+    <li><b>Zum Bar, 3 oz, $5.85.</b> Cold-process, superfatted goat's milk, essential oils. Closest to Dr. Squatch's feel in reviews but pricier per ounce ($1.95).</li>
+  </ul>
+
+  <h2>9. Things to know before you buy</h2>
+  <ul>
+    <li><b>Unilever owns Dr. Squatch.</b> Announced June 2025; Unilever's audited accounts say 98.7% acquired 2 Sept 2025 for €1,243M. No official formula change has been announced. Complaints of "quality nosedived" exist on Reddit and Trustpilot but are anecdotal, mostly about deodorant.</li>
+    <li><b>Reviews split on value.</b> Esquire (Mar 2026) called it "Best Cheap Bar Soap for Men." Gear Patrol called $9 a bar "robbery" and said it "disintegrates." The one consistent complaint is that bars melt fast.</li>
+    <li><b>Sensitive skin:</b> dermatology literature says alkaline true soap can aggravate eczema versus pH-balanced syndets. Since your skin feels better on it, that's your data; Cool Fresh Aloe is the variant reviewers call gentlest.</li>
+    <li><b>Company ratings:</b> Trustpilot 4.1 (~48k reviews). BBB rating D-, not accredited, for failing to answer 54 complaints, mostly delivery and subscription.</li>
+  </ul>
+
+  <h2>10. What could not be verified</h2>
+  <ul>
+    <li>Any store-level stock in Midlothian, Waxahachie, Mansfield or Cedar Hill. Retailer sites do not expose it, and direct fetches were blocked in this environment.</li>
+    <li>Live cart prices. Every figure is a page snapshot read on 10 Oct 2026. CVS showed two prices ($7.29 and $8.29). Amazon's 10-pack showed $45.00 and $59.99 in different snapshots.</li>
+    <li>Costco in-warehouse price ($27.99 for the 6-pack) comes from a third-party crowd tracker, not Costco. Costco.com's 5-pack page did not render a price; $24.99 is from a Sept 2026 deal post.</li>
+    <li>Sam's Club's page hit a bot wall for one agent; $28.98 is from a search snapshot.</li>
+    <li>Kirkland bar price ($9.99 for 15) is a July 2026 tracker figure; item showed out of stock.</li>
+    <li>Per-scent Amazon ratings for single Dr. Squatch bars (Amazon merges scents into shared listings).</li>
+    <li>Consumer Reports' dissolve-test number for Dr. Squatch (paywalled), and EWG's numeric 1–10 scores (only the hazard band rendered).</li>
+    <li>Any coupon code valid in October 2026. Aggregator codes were expired or unverifiable.</li>
+    <li>Any first-hand Reddit threads (reddit.com blocked); only mirrored quotes were available.</li>
+    <li>Whether Dr. Squatch's formula changed after the Unilever deal. An older Pine Tar label lists olive oil first and includes orange essential oil; the current one lists palm first and omits it. The change is undated.</li>
+    <li>Ulta, Tom Thumb, Dollar General, TJ Maxx and Buc-ee's: no evidence they stock the soap. Ulta's own page lists the brand as online-only.</li>
+  </ul>
+
+  <h2>Sources</h2>
+  <ol class="src" id="srcs"></ol>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+(function(){
+const S = {
+ sq_pt:"https://www.drsquatch.com/products/pine-tar",
+ sq_cfa:"https://www.drsquatch.com/products/cool-fresh-aloe",
+ sq_ff:"https://www.drsquatch.com/products/fresh-falls",
+ sq_bundle:"https://www.drsquatch.com/products/bar-soap",
+ sq_6:"https://www.drsquatch.com/products/bar-soap-6-pack",
+ sq_9:"https://www.drsquatch.com/products/bar-soap-9-pack",
+ sq_30:"https://www.drsquatch.com/collections/pack-30-off-bundle-discounts",
+ sq_sub:"https://www.drsquatch.com/collections/subscription-products",
+ sq_subflow:"https://www.drsquatch.com/pages/subscription-flow",
+ sq_mini:"https://get.drsquatch.com/squatchminisoaptrial-1/",
+ sq_bw:"https://www.drsquatch.com/products/fresh-falls-body-wash",
+ sq_bwpt:"https://www.drsquatch.com/products/pine-tar-body-wash",
+ sq_bw2:"https://www.drsquatch.com/products/body-wash-2-pack",
+ sq_life:"https://www.drsquatch.com/blogs/blog/3-tips-to-extend-the-life-of-your-soap",
+ sq_where:"https://help.drsquatch.com/en-US/where-can-i-buy-your-products-2096388",
+ sq_cancel:"https://help.drsquatch.com/en-US/can-i-cancel-my-subscription-2096468",
+ am_10:"https://www.amazon.com/Dr-Squatch-Mens-Soap-Gift/dp/B083RBHBG3",
+ am_5:"https://www.amazon.com/Dr-Squatch-Mens-Soap-Sampler/dp/B07LFPCRVR",
+ am_3:"https://www.amazon.com/Dr-Squatch-Natural-Bar-Soap/dp/B0DY1XZLY9",
+ am_pt5:"https://www.amazon.com/Dr-Squatch-Mens-Bar-Soap/dp/B0CSPQ7DD9",
+ am_bw:"https://www.amazon.com/Dr-Squatch-Natural-Body-Wash/dp/B0DCCDZKGL",
+ wm_ff:"https://www.walmart.com/ip/Dr-Squatch-Fresh-Falls-Natural-Bar-Soap-for-Men-Zero-Grit-Body-Soap-Gifts-for-Men-5-Oz/391080938",
+ wm_pt:"https://www.walmart.com/reviews/product/102207486",
+ wm_br:"https://www.walmart.com/ip/Dr-Squatch-Bay-Rum-Natural-Bar-Soap-for-Men-Zero-Grit-Body-Soap-Gifts-for-Men-5-Oz/198965110",
+ wm_6:"https://www.walmart.com/ip/Dr-Squatch-Variety-Pack-Bar-Soap/16375705375",
+ wm_9rail:"https://www.walmart.com/ip/Dr-Squatch-Men-s-Soap-Variety-9-Pack-Men-s-Natural-Bar-Soap-Pine-Tar-Wood-Barrel-Bourbon-Cold-Brew-Cleanse-Birchwood-Breeze-Bay-Rum-Coconut-Castaway/1034198761",
+ wm_bw:"https://www.walmart.com/ip/Dr-Squatch-Natural-Body-Wash-for-All-Skin-Types-Fresh-Falls-14-fl-oz/9118004279",
+ wm_bwpt:"https://www.walmart.com/ip/Dr-Squatch-Natural-Body-Wash-For-Men-24-Hour-Moisturizing-Shower-Gel-for-All-Skin-Types-Pine-Tar-14-fl-oz/9119201211",
+ wm_store:"https://www.walmart.com/store/4279",
+ tg_ff:"https://www.target.com/p/dr-squatch-men-39-s-all-natural-bar-soap-fresh-falls-clean-breeze-scent-5oz/-/A-87881070",
+ tg_wbb:"https://www.target.com/p/dr-squatch-men-39-s-all-natural-bar-soap-wood-barrel-bourbon-5oz/-/A-87881073",
+ tg_bw:"https://www.target.com/p/dr-squatch-men-39-s-non-exfoliating-body-wash-fresh-falls-14-fl-oz/-/A-91863285",
+ cc_5:"https://www.costco.com/p/-/dr-squatch-mens-natural-bar-soap-5-oz-5-pack/4201025094",
+ cc_6:"https://www.costco.com/p/-/dr-squatch-natural-bar-soap-6-pack-5-oz/4000178488",
+ cc_kcl:"https://thekrazycouponlady.com/2026/09/01/dr-squatch-bar-soap-5-pack-just-17-49-at-costco-com",
+ cc_wr:"https://app.warehouserunner.com/costco/1800755-dr-squatch-natural-bar-soap-6-pack-30-oz",
+ sc_6:"https://www.samsclub.com/ip/Dr-Squatch-Natural-Bar-Soap-Variety-Pack-5-oz-6-ct/13899170345",
+ heb_br:"https://www.heb.com/product-detail/dr-squatch-men-s-natural-soap-bay-rum/10704522",
+ heb_rr:"https://www.heb.com/product-detail/dr-squatch-men-s-natural-bar-soap-rainforest-rapids/10704014",
+ heb_store:"https://www.heb.com/heb-store/tx/waxahachie/waxahachie-h-e-b-426",
+ kr_ff:"https://www.kroger.com/p/dr-squatch-men-s-natural-fresh-falls-bar-soap-with-zero-grit/0085181700767",
+ kr_bw:"https://www.kroger.com/p/dr-squatch-wood-barrel-bourbon-non-exfoliating-body-wash/0081009559572",
+ kr_store:"https://www.kroger.com/stores/grocery/tx/midlothian/midlothian-towne-ctr/035/00596",
+ wg_list:"https://www.walgreens.com/store/c/productlist/N=20006477-9000159014",
+ wg_store:"https://www.walgreens.com/storelocator/drive-thru-pharmacy/midlothian-tx",
+ cvs_ff:"https://www.cvs.com/shop/dr-squatch-natural-soap-for-men-5-oz-prodid-447269?skuId=447269",
+ cvs_promo:"https://www.cvs.com/shop/personal-care/mens-grooming",
+ ace_bw:"https://www.acehardware.com/p/9106429?x429=true",
+ ulta:"https://www.ulta.com/promotion/buy-more-save-more/49932",
+ glossy:"https://www.glossy.co/beauty/post-acquisition-dr-squatch-plans-to-become-an-icon-brand/",
+ uni_pr:"https://www.unilever.com/news/press-and-media/press-releases/2025/unilever-to-acquire-mens-personal-care-brand-dr-squatch/",
+ sec:"https://www.sec.gov/Archives/edgar/data/217410/000021741026000007/R31.htm",
+ reuters:"https://www.reuters.com/business/unilever-pay-15-billion-mens-grooming-brand-dr-squatch-ft-reports-2025-06-27/",
+ filtery:"https://thefiltery.com/is-dr-squatch-natural-non-toxic/",
+ gp:"https://www.gearpatrol.com/grooming/dr-squatch-soap-review/",
+ esq:"https://www.esquire.com/style/grooming/g70588940/best-body-wash/",
+ wc:"https://www.nytimes.com/wirecutter/reviews/best-bar-soap/",
+ cr:"https://www.consumerreports.org/health/best-bar-soaps-a9416208144/",
+ cr_qz:"https://qz.com/best-bar-soaps-consumer-reports",
+ pbr:"https://purebrandreviews.com/dr-squatch-soap-review/",
+ highya:"https://www.highya.com/dr-squatch-bar-soap-reviews",
+ gha:"https://www.goodhealthacademy.com/reviews/dr-squatch-body-wash/",
+ ewg_pt:"https://www.ewg.org/skindeep/products/1011295-Dr_Squatch_Mens_All_Natural_Bar_Soap_Pine_Tar/",
+ ph:"https://pmc.ncbi.nlm.nih.gov/articles/PMC8954092/",
+ vogue:"https://www.vogue.com/article/body-wash-bar-soap-pros-cons",
+ settle:"https://www.personalcareproductssettlement.com/",
+ settle_pr:"https://www.prnewswire.com/news-releases/if-you-purchased-certain-dr-squatch-products-from-november-1-2018-through-august-29-2026-you-could-be-eligible-for-payment-from-a-class-action-settlement-302863248.html",
+ nad:"https://bbbprograms.org/media/newsroom/decisions/dr-squatch-no-harmful-ingredients",
+ tp:"https://www.trustpilot.com/review/drsquatch.com",
+ bbb:"https://www.bbb.org/us/ca/los-angeles/profile/soap/dr-squatch-inc-1216-1279759",
+ meijer:"https://www.meijer.com/shopping/product/pine-tar/86376500000.html",
+ tcd:"https://www.thecooldown.com/green-business/dr-squatch-deodorant-quality-issues-consumers/",
+ db_bar:"https://www.walmart.com/ip/16671458",
+ db_bar_ing:"https://foodlion.com/groceries/product/dr-bronners-organic-all-one-hemp-peppermint-pure-castile-soap-bar-5-oz-bar/191070",
+ db_liq:"https://www.walmart.com/ip/16672125",
+ db_liq_ing:"https://drbronner.com/products/peppermint-pure-castile-liquid-soap",
+ kirks:"https://www.walmart.com/ip/691853994",
+ kirks_ing:"https://www.shoprite.com/product/kirks-original-fresh-scent-castile-soap-40-oz-3-count-id-00639844100081",
+ duke:"https://www.walmart.com/ip/Duke-Cannon-Big-Ass-Brick-of-Soap-for-Men-Midnight-Swim-10-oz-Bar-Soap/755023585",
+ duke_ing:"https://dukecannon.com/products/big-ass-brick-of-soap-r-midnight-swim",
+ grandpa:"https://www.walmart.com/ip/24819203",
+ grandpa_ing:"https://www.hannaford.com/groceries/health-beauty/bath-body/bar-soap/the-grandpa-soap-co-original-pine-tar-face-body-hair-bar-425-oz-bar.html",
+ zum:"https://www.walmart.com/ip/132797244",
+ zum_ing:"https://hannaford.com/groceries/product/zum-bar-patchouli-goats-milk-soap-bar-3-oz-bar/327805",
+ emj:"https://www.mynavyexchange.com/every-man-jack-pacific-drive-cold-plunge-body-bar/15592547",
+ emj_ing:"https://wfm.amazon.com/product/every-man-jack-pacific-dive-cold-plunge-soap-bar-5-oz-b0dq6348z9",
+ kmf:"https://www.vitacost.com/products/kiss-my-face-olive-oil-bar-soap-fragrance-free-8-oz-230-g-6517",
+ kmf_ing:"https://hannaford.com/groceries/product/kiss-my-face-fragrance-free-pure-olive-oil-soap-bar-4-oz-bar/309519",
+ sof:"https://www.heb.com/product-detail/south-of-france-lavender-fields-bar-soap/1925308",
+ sof_ing:"https://weaversway.provisions.coop/products/south-of-france-shea-butter-bar-soap-og-6-oz",
+ shea:"https://www.walmart.com/ip/seort/554621737",
+ shea_ing:"https://pasteurpharmacy.com/products/shea-moisture-deeply-moisturizing-bar-soap-8-oz",
+ toms:"https://www.walmart.com/ip/a/54901060",
+ toms_ing:"https://stopandshop.com/groceries/product/toms-of-maine-natural-lavender-shea-beauty-soap-bar-5-oz-bar/229285",
+ kirk_cc:"https://www.costco.com/kirkland-signature-bar-soap-with-shea-butter%2c-15-bars.product.100643940.html",
+ kirk_wr:"https://app.warehouserunner.com/costco/394697-kirkland-signature-body-soap-15ct-4-5-oz",
+ harrys:"https://www.harrys.com/en/products/bar-soap",
+ yard:"https://www.walmart.com/ip/183655668",
+ yard_ing:"https://foodlion.com/groceries/product/yardley-oatmeal-almond-moisturizing-bath-soap-bar-4-25-oz-bar/28556",
+ mf:"https://www.smallflower.com/products/marius-fabre-olive-oil-marseille-bar-soap-cube-400-g-10092292",
+ well:"https://well.ca/products/dr-squatch-soap-bar-pine-tar_292349.html"
+};
+const keys=Object.keys(S); const num=k=>keys.indexOf(k)+1;
+const ref=ks=>ks.map(k=>'['+num(k)+']').join(' ');
+
+// ---- Chart 1: Dr. Squatch per-bar by channel
+const C1=[
+ {c:"Amazon 10-pack",pack:"10 bars $45.00",v:4.50,st:"u",n:"Fetched at $45.00; a cached snapshot showed $59.99 ($6.00/bar). Confirm in cart.",s:["am_10"]},
+ {c:"Costco warehouse 6-pack",pack:"6 bars $27.99 (+ soap saver)",v:4.67,st:"u",n:"Third-party tracker, last seen Aug 2026; 590 of 593 warehouses out of stock. Members only.",s:["cc_6","cc_wr"]},
+ {c:"Sam's Club 6-ct",pack:"6 bars $28.98",v:4.83,st:"p",n:"Search snapshot; samsclub.com blocked one crawl. Members only; club price may differ.",s:["sc_6"]},
+ {c:"Costco.com 5-pack",pack:"5 bars $24.99",v:5.00,st:"p",n:"Price from a 1 Sept 2026 deal post; Costco page did not render a price. Online only, limit 5, members.",s:["cc_5","cc_kcl"]},
+ {c:"Walmart.com 6-pack",pack:"6 bars $32.86 (was $41.88)",v:5.48,st:"u",n:"Search summary only; likely marketplace seller. Not seen in store.",s:["wm_6"]},
+ {c:"Walmart Rollback single",pack:"1 bar $5.97 (was $6.98)",v:5.97,st:"p",n:"Seen in a 'similar items' rail; date of rollback unclear.",s:["wm_9rail"]},
+ {c:"drsquatch.com single / 6 / 9 / 11-pack",pack:"$6.00 per bar at every size (14% sale)",v:6.00,st:"v",n:"Free shipping only over $55, so 11 bars ($66) ships free; 9 bars ($54) does not.",s:["sq_pt","sq_6","sq_9","sq_30"]},
+ {c:"drsquatch.com subscription, 4–11 bars quarterly",pack:"$24 / $36 / $54 / $66",v:6.00,st:"v",n:"Free shipping on all subscription orders. Cancel in account portal; BBB shows subscription complaints.",s:["sq_sub","sq_subflow"]},
+ {c:"Amazon Pine Tar 5-pack",pack:"5 bars $31.50",v:6.30,st:"v",n:"4.4 stars, 41 reviews on this listing.",s:["am_pt5"]},
+ {c:"H-E-B Waxahachie (Bay Rum)",pack:"1 bar $6.44",v:6.44,st:"v",n:"Other scents $6.98–$7.99. Snapshot defaulted to another H-E-B store; Waxahachie price may differ.",s:["heb_br","heb_rr","heb_store"]},
+ {c:"drsquatch.com build-a-bundle (5 bars)",pack:"5 bars at $6.65 each",v:6.65,st:"v",n:"Bundle page lists $7 list price, 5% off at 5 bars. Worse than the single-bar sale price.",s:["sq_bundle"]},
+ {c:"Walmart Midlothian single",pack:"1 bar $6.98",v:6.98,st:"v",n:"Store #4279, 400 N Hwy 67. Walmart is the brand's main retail chain.",s:["wm_ff","wm_store","sq_where"]},
+ {c:"Amazon 3-pack",pack:"3 bars $20.94",v:6.98,st:"v",n:"4.5 stars, 87,329 reviews (scents merged).",s:["am_3"]},
+ {c:"Target (Mansfield / Cedar Hill / Waxahachie)",pack:"1 bar $6.99",v:6.99,st:"v",n:"$5 Target gift card with 4 select personal-care items; 5% off with Circle Card.",s:["tg_ff"]},
+ {c:"Walgreens Midlothian",pack:"1 bar $6.99",v:6.99,st:"v",n:"1481 E Main St. Site-wide 15–20% off $35+ promos seen.",s:["wg_list","wg_store"]},
+ {c:"Amazon 5-pack variety",pack:"5 bars $34.99",v:7.00,st:"v",n:"4.6 stars, 32,012 reviews. Subscribe & Save $29.74 seen in a snippet, unverified.",s:["am_5"]},
+ {c:"drsquatch.com 1-bar monthly subscription",pack:"1 bar/month $7.00",v:7.00,st:"v",n:"Worst official per-bar price; the 2-bar monthly is $6.50.",s:["sq_sub"]},
+ {c:"CVS Midlothian",pack:"1 bar $7.29 (one snapshot $8.29)",v:7.29,st:"p",n:"100 E Main St. $3 ExtraBucks when buying 2 bars or washes.",s:["cvs_ff","cvs_promo"]},
+ {c:"Kroger Midlothian",pack:"1 bar $7.49",v:7.49,st:"v",n:"2200 FM 663. Kroger prices are per store; snapshot store unknown. Sale to $6.99 expired Aug 18.",s:["kr_ff","kr_store"]},
+ {c:"drsquatch.com limited-edition scents",pack:"1 bar $8.00",v:8.00,st:"v",n:"Seasonal and collab scents (Mango Tango, etc.).",s:["sq_pt"]}
+];
+// ---- Chart 2: $/oz
+const C2=[
+ {p:"Kirkland Signature Shea bar",sz:"15 × 4.5 oz",pr:"$9.99",v:0.15,k:"alt",st:"u",r:"Costco",n:"July 2026 tracker price; showed out of stock. Consumer Reports' overall top pick.",s:["kirk_cc","kirk_wr","cr_qz"]},
+ {p:"Kirk's Castile 4-pack",sz:"4 × 4 oz",pr:"$5.97",v:0.37,k:"alt",st:"v",r:"Walmart",n:"4.8 stars, 2,554 reviews. 100% coconut soap.",s:["kirks","kirks_ing"]},
+ {p:"Dr. Bronner's Castile liquid",sz:"32 fl oz",pr:"$16.97",v:0.53,k:"alt",st:"v",r:"Walmart",n:"4.8 stars, 5,687 reviews. Dilute it; it's concentrated.",s:["db_liq","db_liq_ing"]},
+ {p:"Yardley Oatmeal & Almond 8-pack",sz:"8 × 4.25 oz",pr:"$22.68",v:0.67,k:"alt",st:"v",r:"Walmart",n:"Fails the brief: tallow, synthetic fragrance, Yellow 5, Red 33.",s:["yard","yard_ing"]},
+ {p:"Kiss My Face Pure Olive Oil (unscented)",sz:"8 oz",pr:"$5.49",v:0.69,k:"alt",st:"v",r:"Vitacost",n:"Three ingredients. Reviews say weak lather. $8.15 at Walmart ($1.02/oz).",s:["kmf","kmf_ing"]},
+ {p:"Marius Fabre Savon de Marseille",sz:"400 g (14.1 oz)",pr:"$10.00",v:0.71,k:"alt",st:"p",r:"Smallflower",n:"Six ingredients, no palm. Listing was sold out.",s:["mf"]},
+ {p:"Dr. Squatch 3-pack body wash + free scrubber",sz:"3 × 14 oz",pr:"$31.50",v:0.75,k:"wash",st:"v",r:"drsquatch.com",n:"Promo collection page; 'only through this exclusive offer'.",s:["sq_30"]},
+ {p:"South of France Shea Butter bar",sz:"6 oz",pr:"$4.48",v:0.75,k:"alt",st:"v",r:"H-E-B",n:"Triple-milled, contains 'fragrance'. $7.40 at Walmart.",s:["sof","sof_ing"]},
+ {p:"SheaMoisture Raw Shea bar",sz:"8 oz",pr:"$5.98",v:0.75,k:"alt",st:"v",r:"Walmart",n:"4.5 stars, ~700 reviews. Fragrance and colorants; two retailer ingredient lists conflict.",s:["shea","shea_ing"]},
+ {p:"Dr. Squatch Pine Tar body wash (Rollback)",sz:"14 oz",pr:"$10.98",v:0.78,k:"wash",st:"v",r:"Walmart",n:"4.6 stars, 2,011 ratings. Was $12.98.",s:["wm_bwpt"]},
+ {p:"Duke Cannon Big Ass Brick",sz:"10 oz",pr:"$7.98",v:0.80,k:"alt",st:"v",r:"Walmart",n:"4.8 stars, 2,138 reviews. Synthetic fragrance, dyes, tallow in some scents.",s:["duke","duke_ing"]},
+ {p:"Dr. Squatch Amazon 10-pack",sz:"10 × 5 oz",pr:"$45.00",v:0.90,k:"bar",st:"u",r:"Amazon",n:"Conflicting snapshot at $59.99 ($1.20/oz).",s:["am_10"]},
+ {p:"Dr. Squatch body wash",sz:"14 oz",pr:"$12.98",v:0.93,k:"wash",st:"v",r:"Walmart / Target",n:"Target $12.99. Kroger $12.99.",s:["wm_bw","tg_bw","kr_bw"]},
+ {p:"Tom's of Maine Lavender & Shea",sz:"5 oz",pr:"$4.97",v:0.99,k:"alt",st:"v",r:"Walmart",n:"4.8 stars, 452 reviews. Natural fragrance, palm.",s:["toms","toms_ing"]},
+ {p:"Dr. Squatch 5-pack",sz:"5 × 5 oz",pr:"$24.99",v:1.00,k:"bar",st:"p",r:"Costco.com",n:"Members only. Price from Sept 2026 deal post.",s:["cc_5","cc_kcl"]},
+ {p:"Dr. Squatch body wash multipack",sz:"2–4 × 14 oz",pr:"$14 / bottle",v:1.00,k:"wash",st:"v",r:"drsquatch.com",n:"7% off list; subscription same price.",s:["sq_bw2"]},
+ {p:"Dr. Bronner's Castile bar",sz:"5 oz",pr:"$5.17",v:1.03,k:"alt",st:"v",r:"Walmart",n:"4.8 stars, 1,040 reviews (Baby Unscented). Closest formula to Dr. Squatch.",s:["db_bar","db_bar_ing"]},
+ {p:"Dr. Squatch body wash single",sz:"14 oz",pr:"$15.00",v:1.07,k:"wash",st:"v",r:"drsquatch.com",n:"Fresh Falls was out of stock at retrieval.",s:["sq_bw","sq_bwpt"]},
+ {p:"Dr. Squatch bar (official, sale)",sz:"5 oz",pr:"$6.00",v:1.20,k:"bar",st:"v",r:"drsquatch.com",n:"14% off $7 list. Same per-bar at 6, 9 and 11-packs.",s:["sq_pt","sq_6"]},
+ {p:"Harry's bar soap",sz:"4 oz",pr:"$5.00",v:1.25,k:"alt",st:"v",r:"harrys.com",n:"22 ingredients incl. fragrance allergens and TiO2.",s:["harrys"]},
+ {p:"Every Man Jack Cold Plunge bar",sz:"5 oz",pr:"$6.99",v:1.40,k:"alt",st:"v",r:"Target",n:"$5.99 at Navy Exchange ($1.20/oz). Closest clone but synthetic fragrance + colorants.",s:["emj","emj_ing"]},
+ {p:"Dr. Squatch bar (Walmart / Target / Walgreens)",sz:"5 oz",pr:"$6.98",v:1.40,k:"bar",st:"v",r:"Walmart Midlothian",n:"Target $6.99, Walgreens $6.99, CVS $7.29, Kroger $7.49.",s:["wm_ff","tg_ff","wg_list"]},
+ {p:"Zum Bar (goat's milk)",sz:"3 oz",pr:"$5.85",v:1.95,k:"alt",st:"v",r:"Walmart",n:"Cold-process, superfatted. Small review counts (8–38 per scent).",s:["zum","zum_ing"]},
+ {p:"Grandpa's Pine Tar",sz:"4.25 oz",pr:"$9.28",v:2.18,k:"alt",st:"v",r:"Walmart",n:"4.5 stars, 260 reviews. Cleanest pine-tar option, but pricier than Squatch.",s:["grandpa","grandpa_ing"]}
+];
+// ---- Chart 3: rating vs $/oz
+const C3=[
+ {p:"Dr. Squatch bar (Fresh Falls)",k:"sq",x:1.40,y:4.7,n:1146,pl:"Walmart",s:["wm_ff"]},
+ {p:"Dr. Squatch bar (Pine Tar)",k:"sq",x:1.40,y:4.5,n:988,pl:"Walmart",s:["wm_pt"]},
+ {p:"Dr. Squatch bar (Wood Barrel Bourbon)",k:"sq",x:1.40,y:4.68,n:8897,pl:"Target",s:["tg_wbb"]},
+ {p:"Dr. Squatch 3-pack (merged scents)",k:"sq",x:1.40,y:4.5,n:87329,pl:"Amazon",s:["am_3"]},
+ {p:"Dr. Squatch 5-pack variety",k:"sq",x:1.40,y:4.6,n:32012,pl:"Amazon",s:["am_5"]},
+ {p:"Dr. Squatch body wash (Pine Tar)",k:"sq",x:0.93,y:4.6,n:2011,pl:"Walmart",s:["wm_bwpt"]},
+ {p:"Dr. Squatch body wash 2-pack",k:"sq",x:1.18,y:4.4,n:2737,pl:"Amazon",s:["am_bw"]},
+ {p:"Dr. Bronner's Castile bar",k:"alt",x:1.03,y:4.8,n:1040,pl:"Walmart",s:["db_bar"]},
+ {p:"Dr. Bronner's Castile liquid",k:"alt",x:0.53,y:4.8,n:5687,pl:"Walmart",s:["db_liq"]},
+ {p:"Kirk's Castile 4-pack",k:"alt",x:0.37,y:4.8,n:2554,pl:"Walmart",s:["kirks"]},
+ {p:"Duke Cannon Big Ass Brick",k:"alt",x:0.80,y:4.8,n:2138,pl:"Walmart",s:["duke"]},
+ {p:"Grandpa's Pine Tar",k:"alt",x:2.18,y:4.5,n:260,pl:"Walmart",s:["grandpa"]},
+ {p:"SheaMoisture Raw Shea bar",k:"alt",x:0.75,y:4.5,n:701,pl:"Walmart",s:["shea"]},
+ {p:"Tom's of Maine Lavender & Shea",k:"alt",x:0.99,y:4.8,n:452,pl:"Walmart",s:["toms"]},
+ {p:"Yardley Oatmeal & Almond",k:"alt",x:0.67,y:4.5,n:4706,pl:"Walmart",s:["yard"]}
+];
+// ---- Table 4: ingredients
+const T4=[
+ ["Dr. Squatch bar (Pine Tar / Cool Fresh Aloe)","True soap, cold-process","<span class=mid>'Naturally derived fragrance' (undisclosed)</span>","<span class=yes>Clay, charcoal only</span> (Aloe lists 'Colorant')","<span class=mid>Yes, 'sustainable'</span>","<span class=yes>Shea butter</span>","8–11","$1.20–1.40",["sq_pt","sq_cfa","well"]],
+ ["Dr. Squatch body wash","True liquid soap (potassium cocoate/oleate)","<span class=mid>'Naturally derived fragrance'</span>","<span class=yes>None</span>","<span class=yes>No</span>","<span class=yes>Glycerin, saccharide isomerate</span>","13–17","$0.78–1.07",["sq_bw","sq_bwpt"]],
+ ["Dr. Bronner's Castile bar","True soap, cold-process","<span class=yes>Essential oils only</span>","<span class=yes>None</span>","<span class=mid>Yes, organic fair-trade</span>","<span class=no>No shea</span> (hemp, jojoba)","13","$1.03",["db_bar_ing"]],
+ ["Dr. Bronner's Castile liquid","True liquid soap (KOH)","<span class=yes>Essential oils only</span>","<span class=yes>None</span>","<span class=mid>Palm kernel</span>","<span class=no>No</span>","11","$0.53",["db_liq_ing"]],
+ ["Kirk's Castile","True soap, 100% coconut","<span class=yes>Natural fragrance or none</span>","<span class=yes>None</span>","<span class=yes>No</span>","<span class=no>No</span> (can be drying)","5–6","$0.37",["kirks_ing"]],
+ ["Kiss My Face Pure Olive Oil","True soap, castile","<span class=yes>None</span>","<span class=yes>None</span>","<span class=yes>No</span>","<span class=no>No</span>","3","$0.69–1.02",["kmf_ing"]],
+ ["Zum Bar","True soap, cold-process","<span class=yes>Essential oils</span> (some scents add fragrance oil)","<span class=mid>Mineral pigments, some scents</span>","<span class=mid>Yes</span>","<span class=yes>Goat's milk, superfatted</span>","6–8","$1.95",["zum_ing"]],
+ ["Grandpa's Pine Tar","True soap, milled","<span class=yes>None</span>","<span class=yes>None</span>","<span class=mid>Yes, certified</span>","<span class=no>No</span>","8","$2.18",["grandpa_ing"]],
+ ["Tom's of Maine","True soap, milled","<span class=mid>'Natural fragrance'</span>","<span class=yes>None</span>","<span class=mid>Yes, RA certified</span>","<span class=mid>Shea extract</span>","8","$0.99",["toms_ing"]],
+ ["Every Man Jack Cold Plunge","True soap, cold-process","<span class=no>Synthetic fragrance + allergens</span>","<span class=no>Mica, TiO2, iron oxides</span>","<span class=mid>Yes</span>","<span class=yes>Shea, castor, sunflower</span>","~21","$1.20–1.40",["emj_ing"]],
+ ["Kirkland Signature Shea","True soap, milled","<span class=no>'Parfum'</span>","<span class=no>TiO2</span>","<span class=mid>Yes</span>","<span class=yes>Shea</span>","~17","$0.15 (unverified)",["kirk_cc"]],
+ ["Duke Cannon Big Ass Brick","True soap, milled","<span class=no>'Fragrance'</span>","<span class=no>Ultramarines, iron oxide</span>","<span class=mid>Palm and/or tallow</span>","<span class=no>No</span>","~10","$0.80",["duke_ing"]],
+ ["South of France","True soap, milled","<span class=no>'Fragrance'</span> + essential oils","<span class=yes>None</span>","<span class=mid>Yes, certified</span>","<span class=yes>Shea, olive</span>","12","$0.75–1.23",["sof_ing"]],
+ ["SheaMoisture Raw Shea","True soap, milled","<span class=no>'Fragrance (Parfum)'</span>","<span class=no>Colorants</span>","<span class=mid>Yes</span>","<span class=yes>Shea, coconut oil</span>","~12 (lists conflict)","$0.75",["shea_ing"]],
+ ["Harry's","True soap, milled","<span class=no>'Fragrance' + 5 allergens</span>","<span class=no>TiO2</span>","<span class=mid>Yes</span>","<span class=yes>Shea</span>","22","$1.25",["harrys"]],
+ ["Yardley Oatmeal & Almond","True soap, milled","<span class=no>'Fragrance'</span>","<span class=no>Yellow 5, Red 33, TiO2</span>","<span class=no>Tallow</span>","<span class=no>No</span>","14","$0.67",["yard_ing"]]
+];
+// ---- Table 5: stores
+const T5=[
+ ["Walmart Supercenter","400 N Hwy 67, Midlothian (store #4279); also Waxahachie, Mansfield","$6.98","$12.98","v","Brand's main retail chain. No Rollback on bar soap in snapshots.",["wm_ff","wm_bw","wm_store"]],
+ ["H-E-B plus!","800 Hwy 77, Waxahachie (#426)","$6.44–$7.99 by scent","not found","p","Snapshot defaulted to another store. Body wash not seen.",["heb_br","heb_store"]],
+ ["Target","1801 Hwy 287 N, Mansfield; 739 N Hwy 67, Cedar Hill; 1316 N Hwy 77, Waxahachie","$6.99","$12.99","p","Addresses from state filings and third-party directories, not target.com.",["tg_ff","tg_bw"]],
+ ["Walgreens","1481 E Main St, Midlothian","$6.99","listed, price not captured","v","15–20% off $35+ site promos seen.",["wg_list","wg_store"]],
+ ["CVS","100 E Main St, Midlothian","$7.29–$8.29","$13.79–$13.99","p","$3 ExtraBucks for buying 2. Address from third-party directories.",["cvs_ff","cvs_promo"]],
+ ["Kroger","2200 FM 663, Midlothian (#596)","$7.49","$12.99","v","Per-store pricing; 'low stock' flags on body wash.",["kr_ff","kr_bw","kr_store"]],
+ ["Costco","1500 US-287, Mansfield (#1793, opened Aug 2026); 250 W Hwy 67, Duncanville","6-pack $27.99 ($4.67/bar)","—","u","Warehouse price is a crowd-tracker figure; nearly all warehouses out of stock. costco.com 5-pack $24.99.",["cc_6","cc_wr","cc_5"]],
+ ["Sam's Club","2900 W Wheatland Rd, Dallas (#8282); 2325 W I-20, Grand Prairie. Waxahachie club planned for 2027.","6-ct $28.98 ($4.83/bar)","—","p","Snapshot; 'prices may vary in club'.",["sc_6"]],
+ ["Ace Hardware","530 E Main St, Midlothian (Higginbotham Bros)","not found","$16.99","u","Highest wash price found; local stock unverified.",["ace_bw"]],
+ ["Ulta / Tom Thumb / Dollar General / TJ Maxx / Buc-ee's","—","—","—","u","No evidence any carry the soap. Ulta lists the brand as online-only.",["ulta"]]
+];
+
+// ---- helpers
+const tip=document.getElementById('tip');
+function showTip(e,html){tip.innerHTML=html;tip.style.opacity=1;moveTip(e)}
+function moveTip(e){const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+14,y=e.clientY+14;if(x+w>innerWidth-8)x=e.clientX-w-14;if(y+h>innerHeight-8)y=e.clientY-h-14;tip.style.left=x+'px';tip.style.top=y+'px'}
+function hideTip(){tip.style.opacity=0}
+const fmt=v=>'$'+v.toFixed(2);
+const stName={v:"Verified",p:"Partially verified",u:"Unverified"};
+const pill=st=>'<span class="pill '+st+'">'+stName[st]+'</span>';
+const NS='http://www.w3.org/2000/svg';
+function el(t,a,txt){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);if(txt!=null)n.textContent=txt;return n}
+function defs(svg){const d=el('defs',{});
+ for(const [id,col] of [['hv','var(--s1)'],['hp','var(--s1)'],['h2','var(--s2)'],['h3','var(--s3)']]){
+  const p=el('pattern',{id:id,width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'});
+  p.appendChild(el('rect',{width:6,height:6,fill:col,opacity:.28}));
+  p.appendChild(el('rect',{width:2.2,height:6,fill:col}));d.appendChild(p)}
+ svg.appendChild(d)}
+// legend swatches for hatch
+for(const [id,col,op] of [['sw-p','var(--s1)',.55],['sw-u','var(--s1)',0],['sw-h','var(--s2)',0]]){const e=document.getElementById(id);e.style.background=op?col:'repeating-linear-gradient(45deg,'+col+' 0 2px,transparent 2px 5px)';e.style.opacity=op||1;if(!op)e.style.border='1px solid var(--line)'}
+
+function hbar(mount,rows,opts){
+ const W=960,L=opts.left,R=36,T=8,band=opts.band||26,H=T+rows.length*band+34;
+ const svg=el('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':opts.label});defs(svg);
+ const max=opts.max,x=v=>L+(W-L-R)*v/max;
+ for(const t of opts.ticks){svg.appendChild(el('line',{x1:x(t),x2:x(t),y1:T,y2:H-30,class:'grid'}));svg.appendChild(el('text',{x:x(t),y:H-12,'text-anchor':'middle',class:'tick'},fmt(t)))}
+ svg.appendChild(el('line',{x1:L,x2:L,y1:T,y2:H-30,class:'base'}));
+ rows.forEach((r,i)=>{const y=T+i*band+(band-18)/2,g=el('g',{class:'bar',tabindex:0});
+  const fill=r.st==='v'?opts.color(r):r.st==='p'?opts.color(r):'url(#'+opts.hatch(r)+')';
+  const rect=el('rect',{x:L,y:y,width:Math.max(0,x(r.v)-L),height:18,rx:0,fill:fill,class:'m'});
+  if(r.st==='p')rect.setAttribute('opacity',.55);
+  // rounded data-end via clip: draw bar then square the base with small overlay
+  const rr=el('rect',{x:L,y:y,width:Math.max(0,x(r.v)-L),height:18,rx:4,fill:fill,class:'m'});if(r.st==='p')rr.setAttribute('opacity',.55);
+  g.appendChild(rr);g.appendChild(el('rect',{x:L,y:y,width:Math.min(4,Math.max(0,x(r.v)-L)),height:18,fill:fill,opacity:r.st==='p'?.55:1}));
+  g.appendChild(el('text',{x:L-8,y:y+13,'text-anchor':'end',class:'lab'},opts.name(r)));
+  g.appendChild(el('text',{x:x(r.v)+6,y:y+13,class:'val'},fmt(r.v)));
+  g.appendChild(el('rect',{x:0,y:T+i*band,width:W,height:band,fill:'transparent'}));
+  const h=opts.tip(r);g.addEventListener('mousemove',e=>showTip(e,h));g.addEventListener('mouseleave',hideTip);
+  g.addEventListener('focus',()=>{tip.innerHTML=h;tip.style.opacity=1;const b=g.getBoundingClientRect();tip.style.left=Math.min(b.left+L*b.width/W,innerWidth-300)+'px';tip.style.top=(b.bottom+6)+'px'});g.addEventListener('blur',hideTip);
+  svg.appendChild(g)});
+ mount.appendChild(svg)}
+
+const c1rows=[...C1].sort((a,b)=>a.v-b.v);
+hbar(document.getElementById('c1'),c1rows,{left:300,max:9,ticks:[0,2,4,6,8],label:'Dr. Squatch price per bar by channel',
+ color:r=>'var(--s1)',hatch:r=>'hv',name:r=>r.c,
+ tip:r=>'<b>'+r.c+'</b>'+r.pack+' · '+fmt(r.v)+'/bar<br>'+stName[r.st]+'. '+r.n+'<br>Sources '+ref(r.s)});
+document.querySelector('#t1 tbody').innerHTML=c1rows.map(r=>'<tr><td>'+r.c+'</td><td>'+r.pack+'</td><td class=n>'+r.pack.match(/\$[\d.]+/)[0]+'</td><td class=n>'+fmt(r.v)+'</td><td>'+pill(r.st)+'</td><td>'+r.n+' '+ref(r.s)+'</td></tr>').join('');
+
+const c2rows=[...C2].sort((a,b)=>a.v-b.v);
+const col2={bar:'var(--s1)',wash:'var(--s3)',alt:'var(--s2)'},hat2={bar:'hv',wash:'h3',alt:'h2'};
+hbar(document.getElementById('c2'),c2rows,{left:330,max:2.4,ticks:[0,0.5,1,1.5,2],label:'Price per ounce, Dr. Squatch vs alternatives',
+ color:r=>col2[r.k],hatch:r=>hat2[r.k],name:r=>r.p,
+ tip:r=>'<b>'+r.p+'</b>'+r.sz+' · '+r.pr+' at '+r.r+' · '+fmt(r.v)+'/oz<br>'+stName[r.st]+'. '+r.n+'<br>Sources '+ref(r.s)});
+document.querySelector('#t2 tbody').innerHTML=c2rows.map(r=>'<tr><td>'+r.p+'</td><td>'+r.sz+'</td><td class=n>'+r.pr+'</td><td class=n>'+fmt(r.v)+'</td><td>'+r.r+' '+ref(r.s)+'</td><td>'+pill(r.st)+'</td></tr>').join('');
+
+// scatter
+(function(){
+ const W=960,H=420,L=56,R=24,T=16,B=44,m=document.getElementById('c3');
+ const svg=el('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Rating versus price per ounce'});
+ const xs=v=>L+(W-L-R)*v/2.4, ys=v=>T+(H-T-B)*(1-(v-4.2)/(5-4.2));
+ for(const t of [0,0.5,1,1.5,2]){svg.appendChild(el('line',{x1:xs(t),x2:xs(t),y1:T,y2:H-B,class:'grid'}));svg.appendChild(el('text',{x:xs(t),y:H-B+18,'text-anchor':'middle',class:'tick'},fmt(t)))}
+ for(const t of [4.2,4.4,4.6,4.8,5.0]){svg.appendChild(el('line',{x1:L,x2:W-R,y1:ys(t),y2:ys(t),class:'grid'}));svg.appendChild(el('text',{x:L-8,y:ys(t)+4,'text-anchor':'end',class:'tick'},t.toFixed(1)))}
+ svg.appendChild(el('text',{x:(L+W-R)/2,y:H-6,'text-anchor':'middle',class:'tick'},'Price per ounce (USD)'));
+ svg.appendChild(el('text',{x:14,y:(T+H-B)/2,'text-anchor':'middle',transform:'rotate(-90 14 '+(T+H-B)/2+')',class:'tick'},'Star rating'));
+ const rad=n=>4+Math.sqrt(Math.log10(n))*5;
+ [...C3].sort((a,b)=>b.n-a.n).forEach(d=>{const g=el('g',{class:'dot',tabindex:0});
+  g.appendChild(el('circle',{cx:xs(d.x),cy:ys(d.y),r:rad(d.n)+2,fill:'var(--surface)'}));
+  g.appendChild(el('circle',{cx:xs(d.x),cy:ys(d.y),r:rad(d.n),fill:d.k==='sq'?'var(--s1)':'var(--s2)',opacity:.85,class:'m'}));
+  const h='<b>'+d.p+'</b>'+d.y.toFixed(1)+' stars · '+d.n.toLocaleString()+' reviews on '+d.pl+' · '+fmt(d.x)+'/oz<br>Source '+ref(d.s);
+  g.addEventListener('mousemove',e=>showTip(e,h));g.addEventListener('mouseleave',hideTip);g.addEventListener('focus',()=>{tip.innerHTML=h;tip.style.opacity=1});g.addEventListener('blur',hideTip);
+  svg.appendChild(g)});
+ // selective labels
+ const lab=[["Kirk's",0.37,4.8,-16,4,'end'],["Bronner's bar",1.03,4.8,16,4,'start'],["Bronner's liquid",0.53,4.8,0,-20,'middle'],["Duke Cannon",0.80,4.8,0,-20,'middle'],["Squatch bars",1.40,4.6,18,4,'start'],["Grandpa's",2.18,4.5,-16,4,'end'],["Squatch wash",0.93,4.6,-16,4,'end']];
+ for(const [t,x,y,dx,dy,an] of lab){svg.appendChild(el('text',{x:xs(x)+dx,y:ys(y)+dy,'text-anchor':an,class:'lab'},t))}
+ m.appendChild(svg);
+ document.querySelector('#t3 tbody').innerHTML=C3.map(d=>'<tr><td>'+d.p+'</td><td class=n>'+d.y.toFixed(2)+'</td><td class=n>'+d.n.toLocaleString()+'</td><td class=n>'+fmt(d.x)+'</td><td>'+d.pl+' '+ref(d.s)+'</td></tr>').join('');
+})();
+
+document.querySelector('#t4 tbody').innerHTML=T4.map(r=>'<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td>'+r[4]+'</td><td>'+r[5]+'</td><td class=n>'+r[6]+'</td><td class=n>'+r[7]+'</td><td>'+ref(r[8])+'</td></tr>').join('');
+document.querySelector('#t5 tbody').innerHTML=T5.map(r=>'<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td class=n>'+r[2]+'</td><td class=n>'+r[3]+'</td><td>'+pill(r[4])+'</td><td>'+r[5]+' '+ref(r[6])+'</td></tr>').join('');
+document.getElementById('srcs').innerHTML=keys.map(k=>'<li><a href="'+S[k]+'" target="_blank" rel="noopener">'+S[k].replace(/^https?:\/\/(www\.)?/,'')+'</a></li>').join('');
+})();
+</script>
